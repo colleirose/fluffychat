@@ -2852,5 +2852,6 @@
                 "type": "String"
             }
         }
-    }
+    },
+    "spoiler": "Spoiler"
 }

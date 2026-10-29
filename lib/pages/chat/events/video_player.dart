@@ -13,6 +13,7 @@ import 'package:fluffychat/utils/platform_infos.dart';
 import 'package:fluffychat/utils/url_launcher.dart';
 import 'package:fluffychat/widgets/blur_hash.dart';
 import 'package:fluffychat/widgets/mxc_image.dart';
+import 'package:fluffychat/widgets/spoiler.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
@@ -24,12 +25,14 @@ class EventVideoPlayer extends StatelessWidget {
   final Timeline? timeline;
   final Color? textColor;
   final Color? linkColor;
+  final bool isSpoiler;
 
   const EventVideoPlayer(
     this.event, {
     this.timeline,
     this.textColor,
     this.linkColor,
+    this.isSpoiler = false,
     super.key,
   });
 
@@ -86,6 +89,7 @@ class EventVideoPlayer extends StatelessWidget {
                 child: Stack(
                   children: [
                     if (event.hasThumbnail &&
+                        !isSpoiler &&
                         AppSettings.showThumbnailsInTimeline.value)
                       MxcImage(
                         event: event,
@@ -110,10 +114,17 @@ class EventVideoPlayer extends StatelessWidget {
                         fit: BoxFit.cover,
                       ),
                     Center(
-                      child: CircleAvatar(
-                        child: supportsVideoPlayer
-                            ? const Icon(Icons.play_arrow_outlined)
-                            : const Icon(Icons.file_download_outlined),
+                      child: Column(
+                        spacing: 8,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (isSpoiler) SpoilerWidget(),
+                          CircleAvatar(
+                            child: supportsVideoPlayer
+                                ? const Icon(Icons.play_arrow_outlined)
+                                : const Icon(Icons.file_download_outlined),
+                          ),
+                        ],
                       ),
                     ),
                     if (duration != null)

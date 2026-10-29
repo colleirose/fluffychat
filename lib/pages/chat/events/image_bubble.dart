@@ -8,6 +8,7 @@ import 'package:fluffychat/config/setting_keys.dart';
 import 'package:fluffychat/utils/file_description.dart';
 import 'package:fluffychat/utils/url_launcher.dart';
 import 'package:fluffychat/widgets/mxc_image.dart';
+import 'package:fluffychat/widgets/spoiler.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
@@ -22,6 +23,7 @@ class ImageBubble extends StatelessWidget {
   final Color? textColor;
   final Color? linkColor;
   final bool thumbnailOnly;
+  final bool isSpoiler;
   final bool animated;
   final double width;
   final double height;
@@ -37,6 +39,7 @@ class ImageBubble extends StatelessWidget {
     this.thumbnailOnly = true,
     this.width = 400,
     this.height = 300,
+    this.isSpoiler = false,
     this.animated = false,
     this.onTap,
     this.borderRadius,
@@ -86,7 +89,8 @@ class ImageBubble extends StatelessWidget {
               children: [
                 Hero(
                   tag: event.eventId,
-                  child: AppSettings.showThumbnailsInTimeline.value
+                  child:
+                      AppSettings.showThumbnailsInTimeline.value && !isSpoiler
                       ? MxcImage(
                           cacheKey: event.transactionId ?? event.eventId,
                           cacheName: event.room.id,
@@ -112,6 +116,7 @@ class ImageBubble extends StatelessWidget {
                           fit: fit,
                         ),
                 ),
+                if (isSpoiler) SpoilerWidget(),
               ],
             ),
           ),

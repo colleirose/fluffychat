@@ -50,6 +50,11 @@ class MessageContent extends StatelessWidget {
   Widget build(BuildContext context) {
     const fontSize = AppConfig.messageFontSize;
     final buttonTextColor = textColor;
+
+    final isSpoiler =
+        {MessageTypes.Image, MessageTypes.Video}.contains(event.messageType) &&
+        event.content.containsKey('page.codeberg.everypizza.msc4193.spoiler');
+
     switch (event.type) {
       case EventTypes.Message:
       case EventTypes.Encrypted:
@@ -90,6 +95,7 @@ class MessageContent extends StatelessWidget {
               borderRadius: borderRadius,
               timeline: timeline,
               textColor: textColor,
+              isSpoiler: isSpoiler,
               onTap: () => showDialog(
                 context: context,
                 builder: (_) => ImageViewer(
@@ -121,6 +127,7 @@ class MessageContent extends StatelessWidget {
           case MessageTypes.Video:
             return EventVideoPlayer(
               event,
+              isSpoiler: isSpoiler,
               textColor: textColor,
               linkColor: linkColor,
               timeline: timeline,

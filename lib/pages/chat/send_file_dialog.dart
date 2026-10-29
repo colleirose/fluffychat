@@ -49,6 +49,7 @@ class SendFileDialog extends StatefulWidget {
 
 class SendFileDialogState extends State<SendFileDialog> {
   bool compress = true;
+  bool spoiler = false;
 
   /// Images smaller than 20kb don't need compression.
   static const int minSizeToCompress = 20 * 1000;
@@ -153,13 +154,18 @@ class SendFileDialogState extends State<SendFileDialog> {
         }
 
         final label = _labelTextController.text.trim();
+        final extraContent = <String, dynamic>{};
+        if (label.isNotEmpty) extraContent['body'] = label;
+        if (spoiler) {
+          extraContent['page.codeberg.everypizza.msc4193.spoiler'] = {};
+        }
 
         try {
           await widget.room.sendFileEvent(
             file,
             thumbnail: thumbnail,
             shrinkImageMaxDimension: compress ? 1600 : null,
-            extraContent: label.isEmpty ? null : {'body': label},
+            extraContent: extraContent,
             threadRootEventId: widget.threadRootEventId,
             threadLastEventId: widget.threadLastEventId,
           );
@@ -178,7 +184,7 @@ class SendFileDialogState extends State<SendFileDialog> {
             file,
             thumbnail: thumbnail,
             shrinkImageMaxDimension: compress ? 1600 : null,
-            extraContent: label.isEmpty ? null : {'body': label},
+            extraContent: extraContent,
           );
         }
       }
@@ -404,58 +410,32 @@ class SendFileDialogState extends State<SendFileDialog> {
                       ),
                     ),
                   // Workaround for SwitchListTile.adaptive crashes in CupertinoDialog
-                  if ({'image', 'video'}.contains(uniqueFileType))
-                    Row(
-                      crossAxisAlignment: .center,
+                  if ({'image', 'video'}.contains(uniqueFileType)) ...[
+                    _SendFileDialogToggle(
+                      text: L10n.of(context).compress,
+                      value: compressionSupported && compress,
+                      onChanged: compressionSupported
+                          ? (v) => setState(() => compress = v)
+                          : null,
                       children: [
-                        if ({
-                          TargetPlatform.iOS,
-                          TargetPlatform.macOS,
-                        }.contains(theme.platform))
-                          CupertinoSwitch(
-                            value: compressionSupported && compress,
-                            onChanged: compressionSupported
-                                ? (v) => setState(() => compress = v)
-                                : null,
-                          )
-                        else
-                          Switch.adaptive(
-                            value: compressionSupported && compress,
-                            onChanged: compressionSupported
-                                ? (v) => setState(() => compress = v)
-                                : null,
+                        if (!compress)
+                          Text(
+                            ' ($sizeString)',
+                            style: theme.textTheme.labelSmall,
                           ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            mainAxisSize: .min,
-                            crossAxisAlignment: .start,
-                            children: [
-                              Row(
-                                mainAxisSize: .min,
-                                children: [
-                                  Text(
-                                    L10n.of(context).compress,
-                                    style: theme.textTheme.titleMedium,
-                                    textAlign: TextAlign.left,
-                                  ),
-                                ],
-                              ),
-                              if (!compress)
-                                Text(
-                                  ' ($sizeString)',
-                                  style: theme.textTheme.labelSmall,
-                                ),
-                              if (!compressionSupported)
-                                Text(
-                                  L10n.of(context).notSupportedOnThisDevice,
-                                  style: theme.textTheme.labelSmall,
-                                ),
-                            ],
+                        if (!compressionSupported)
+                          Text(
+                            L10n.of(context).notSupportedOnThisDevice,
+                            style: theme.textTheme.labelSmall,
                           ),
-                        ),
                       ],
                     ),
+                    _SendFileDialogToggle(
+                      text: L10n.of(context).spoiler,
+                      value: spoiler,
+                      onChanged: (v) => setState(() => spoiler = v),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -473,6 +453,55 @@ class SendFileDialogState extends State<SendFileDialog> {
           ],
         );
       },
+    );
+  }
+}
+
+class _SendFileDialogToggle extends StatelessWidget {
+  final String text;
+  final List<Widget>? children;
+  final ValueChanged<bool>? onChanged;
+  final bool value;
+
+  const _SendFileDialogToggle({
+    required this.text,
+    required this.value,
+    required this.onChanged,
+    this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Row(
+      crossAxisAlignment: .center,
+      children: [
+        if ({TargetPlatform.iOS, TargetPlatform.macOS}.contains(theme.platform))
+          CupertinoSwitch(value: value, onChanged: onChanged)
+        else
+          Switch.adaptive(value: value, onChanged: onChanged),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            mainAxisSize: .min,
+            crossAxisAlignment: .start,
+            children: [
+              Row(
+                mainAxisSize: .min,
+                children: [
+                  Text(
+                    text,
+                    style: theme.textTheme.titleMedium,
+                    textAlign: TextAlign.left,
+                  ),
+                ],
+              ),
+              ...?children,
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
